@@ -37,7 +37,7 @@
     
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
     
     .room-bg-container {
       background-size: cover;
@@ -53,13 +53,11 @@
 <script type="text/babel" data-type="module">
   import React, { useState, useEffect } from 'react';
   import { createRoot } from 'react-dom/client';
-  // あなたのコードで使用しているアイコンをすべてimport
-  import { Book, Map, Compass, Apple, Cherry, Grape, Lock, Key, ArrowLeft, Search, Star, ChevronLeft, ChevronRight, DoorOpen } from 'lucide-react';
+  import { Book, Map, Compass, Cherry, Lock, ArrowLeft, Star, ChevronLeft, ChevronRight, DoorOpen } from 'lucide-react';
 
   // --- 壁（背景）の画像URL ---
-  // GitHubリポジトリのパスに合わせています
   const WALL_IMAGES = [
-    "https://sagara4868-star.github.io/1/Frame%201.png", // Wall 1
+    "https://sagara4868-star.github.io/1/Frame%201.png", // Wall 1 (Exit Door)
     "https://sagara4868-star.github.io/1/Frame%202.png", // Wall 2
     "https://sagara4868-star.github.io/1/Frame%203.png", // Wall 3
     "https://sagara4868-star.github.io/1/Frame%204.png"  // Wall 4
@@ -69,51 +67,48 @@
   const PUZZLE_DATA = [
     {
       id: 1,
-      title: "拳の理",
       question: `2 > 5
 5 > 0
 0 > 2
 
-この法則が支配する
-「遊び」の名前は？`,
-      answer: "ジャンケン",
-      rewardChars: ["コ", "レ"],
-      icon: <Book size={48} className="text-amber-500 drop-shadow-md" />
+この法則において
+「2」が表す3文字は？`,
+      answer: "チョキ",
+      validAnswers: ["チョキ", "ちょき"],
+      icon: <Book size={48} className="text-amber-500 drop-shadow-md" />,
+      wallLabel: "Wall 1 (Puzzle 1)" 
     },
     {
       id: 2,
-      title: "国の形",
-      question: `1T 1D 2F 43 [ ？ ]
+      question: `C → S → G → D → K ...
+↓
+... P → P → [ ？ ]
 
-？に入るアルファベットは？`,
-      answer: "K",
-      rewardChars: ["カ", "ラ"],
-      icon: <Map size={48} className="text-amber-500 drop-shadow-md" />
+表す3文字は？`,
+      answer: "スイカ",
+      validAnswers: ["スイカ", "すいか", "西瓜"],
+      icon: <Cherry size={48} className="text-pink-500 drop-shadow-md" />,
+      wallLabel: "Wall 2 (Puzzle 2)"
     },
     {
       id: 3,
-      title: "二人の軌跡",
-      question: `M → M
-M → K
-K → [ ？ ]
-[ ？ ] → S
+      question: `1T 1D 2F 43K
 
-？に入るアルファベットは？`,
-      answer: "E",
-      rewardChars: ["ヨ", "ロ"],
-      icon: <Compass size={48} className="text-amber-500 drop-shadow-md" />
+[ ？ ]`,
+      answer: "トドウフケン",
+      validAnswers: ["トドウフケン", "とどうふけん", "都道府県"],
+      icon: <Map size={48} className="text-amber-500 drop-shadow-md" />,
+      wallLabel: "Wall 3 (Puzzle 3)"
     },
     {
       id: 4,
-      title: "進化の果実",
-      question: `C → S → G → D → K
-↓
-A → P → P → [ ？ ] → M → W
+      question: `M → M   M → K   K → E   [ ？ ]
 
-？に入る果物の頭文字は？`,
-      answer: "P",
-      rewardChars: ["シ", "ク"],
-      icon: <Cherry size={48} className="text-pink-500 drop-shadow-md" />
+？に該当する地名は？`,
+      answer: "シブヤ",
+      validAnswers: ["シブヤ", "しぶや", "渋谷"],
+      icon: <Compass size={48} className="text-amber-500 drop-shadow-md" />,
+      wallLabel: "Wall 4 (Puzzle 4)"
     }
   ];
 
@@ -121,35 +116,31 @@ A → P → P → [ ？ ] → M → W
   const PuzzleDetail = ({ puzzle, onSolve, onBack }) => {
     const [input, setInput] = useState("");
     const [error, setError] = useState(false);
-    const [showReward, setShowReward] = useState(false);
+    const [isSolvedAnim, setIsSolvedAnim] = useState(false);
 
     const handleSubmit = () => {
-      if (input.trim().toUpperCase() === puzzle.answer) {
-        setShowReward(true);
+      const cleanInput = input.trim();
+      
+      // 正解判定（カナ・漢字対応）
+      if (puzzle.validAnswers.includes(cleanInput)) {
+        setIsSolvedAnim(true);
+        setTimeout(() => {
+          onSolve(puzzle.id, puzzle.answer);
+        }, 1500);
       } else {
         setError(true);
         setTimeout(() => setError(false), 1000);
       }
     };
 
-    if (showReward) {
+    if (isSolvedAnim) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fadeIn z-50 relative">
-          <h3 className="text-2xl text-amber-500 font-serif font-bold mb-6 tracking-widest drop-shadow-lg">解錠成功</h3>
-          <p className="mb-8 text-amber-100/80 font-serif text-sm">壁の文字が浮かび上がった...</p>
-          <div className="flex gap-4 mb-10">
-            {puzzle.rewardChars.map((char, i) => (
-              <div key={i} className="w-24 h-24 bg-amber-950/90 border-2 border-amber-500/50 flex items-center justify-center text-5xl font-serif text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.3)] animate-pulse rounded-sm backdrop-blur-sm">
-                {char}
-              </div>
-            ))}
+          <h3 className="text-3xl text-amber-500 font-serif font-bold mb-6 tracking-widest drop-shadow-lg">正解</h3>
+          <p className="mb-8 text-amber-100/80 font-serif text-lg">言葉が扉に刻まれた...</p>
+          <div className="text-4xl font-bold text-white border-b-2 border-amber-500 pb-2">
+            {puzzle.answer}
           </div>
-          <button
-            onClick={() => onSolve(puzzle.id)}
-            className="px-8 py-3 bg-amber-900/60 border border-amber-700 hover:bg-amber-800/80 transition-colors text-amber-100 font-serif rounded shadow-lg backdrop-blur-md"
-          >
-            部屋に戻る
-          </button>
         </div>
       );
     }
@@ -166,10 +157,9 @@ A → P → P → [ ？ ] → M → W
           <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-amber-600/50"></div>
           <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-amber-600/50"></div>
           
-          <h2 className="text-2xl font-serif text-amber-500 mb-6 flex items-center justify-center gap-3 border-b border-amber-800/50 pb-4">
+          <div className="flex justify-center mb-6">
             {puzzle.icon}
-            <span>{puzzle.title}</span>
-          </h2>
+          </div>
 
           <div className="text-center mb-8">
             <div className="bg-amber-100/5 p-6 rounded border border-amber-900/30 shadow-inner">
@@ -208,10 +198,23 @@ A → P → P → [ ？ ] → M → W
     const [view, setView] = useState("room"); // room, puzzle, ending
     const [currentWallIndex, setCurrentWallIndex] = useState(0); // 0, 1, 2, 3
     const [selectedPuzzleId, setSelectedPuzzleId] = useState(null);
-    const [solvedIds, setSolvedIds] = useState([]);
+    const [solvedState, setSolvedState] = useState({}); // { id: answerString }
     const [finalInputOpen, setFinalInputOpen] = useState(false);
     const [finalAnswer, setFinalAnswer] = useState("");
-    const [direction, setDirection] = useState(""); // animation direction
+
+    // Load external scripts (Confetti)
+    useEffect(() => {
+      if (window.confetti) return; // 読み込み済みならスキップ
+      const script = document.createElement('script');
+      script.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js";
+      script.async = true;
+      document.body.appendChild(script);
+      return () => { 
+        if(document.body.contains(script)) {
+          document.body.removeChild(script); 
+        }
+      };
+    }, []);
 
     // エンディング演出
     useEffect(() => {
@@ -240,11 +243,10 @@ A → P → P → [ ？ ] → M → W
     }, [view]);
 
     // 全問正解判定
-    const isAllSolved = PUZZLE_DATA.every(p => solvedIds.includes(p.id));
+    const isAllSolved = PUZZLE_DATA.every(p => solvedState[p.id]);
 
     // 壁移動
     const changeWall = (dir) => {
-      setDirection(dir === "left" ? "slide-right" : "slide-left");
       if (dir === "left") {
         setCurrentWallIndex((prev) => (prev === 0 ? 3 : prev - 1));
       } else {
@@ -254,23 +256,22 @@ A → P → P → [ ？ ] → M → W
 
     // 謎選択
     const handleSelectPuzzle = (id) => {
-      if (solvedIds.includes(id)) return;
+      if (solvedState[id]) return;
       setSelectedPuzzleId(id);
       setView("puzzle");
     };
 
     // 謎クリア
-    const handleSolve = (id) => {
-      if (!solvedIds.includes(id)) {
-        setSolvedIds([...solvedIds, id]);
-      }
+    const handleSolve = (id, answer) => {
+      setSolvedState(prev => ({ ...prev, [id]: answer }));
       setView("room");
       setSelectedPuzzleId(null);
     };
 
     // 最終問題チェック
     const checkFinalAnswer = () => {
-      if (finalAnswer === "コレカラヨロシク") {
+      const validFinals = ["ヨイオトシヲ", "よいおとしを", "良いお年を", "良いお年ヲ"];
+      if (validFinals.includes(finalAnswer.trim())) {
         setTimeout(() => setView("ending"), 500);
       } else {
         const btn = document.getElementById("final-btn");
@@ -286,7 +287,52 @@ A → P → P → [ ？ ] → M → W
     };
 
     const currentPuzzle = PUZZLE_DATA[currentWallIndex];
-    const isSolved = solvedIds.includes(currentPuzzle.id);
+    const isSolved = !!solvedState[currentPuzzle.id];
+
+    // ヘルパー：プレースホルダー文字列生成
+    const getPuzzleDisplay = (id, length) => {
+      if (solvedState[id]) return solvedState[id];
+      return "〇".repeat(length);
+    };
+
+    // 縦読みレイアウト用のコンポーネント (Wall 1 と Modal で共有)
+    const FinalPuzzleLayout = () => (
+      <div className="flex flex-col items-start gap-1 font-mono text-lg md:text-xl text-amber-100/90 leading-tight">
+          {/* ① チョキ (3文字) -> 2文字目 'ヨ' */}
+          <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-amber-500">①</span>
+              <span className="tracking-[0.2em]">{getPuzzleDisplay(1, 3)}</span>
+          </div>
+          
+          {/* ② スイカ (3文字) -> 2文字目 'イ' */}
+          <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-amber-500">②</span>
+              <span className="tracking-[0.2em]">{getPuzzleDisplay(2, 3)}</span>
+          </div>
+
+          {/* オ (固定) */}
+          <div className="flex items-center gap-2 pl-[1.8em]">
+              <span className="text-amber-500 font-bold">オ</span>
+          </div>
+
+          {/* ③ トドウフケン (6文字) -> 1文字目 'ト' */}
+          <div className="flex items-center gap-2 pl-[1.4em]">
+              <span className="text-sm font-bold text-amber-500">③</span>
+              <span className="tracking-[0.2em]">{getPuzzleDisplay(3, 6)}</span>
+          </div>
+
+          {/* ④ シブヤ (3文字) -> 1文字目 'シ' */}
+          <div className="flex items-center gap-2 pl-[1.4em]">
+              <span className="text-sm font-bold text-amber-500">④</span>
+              <span className="tracking-[0.2em]">{getPuzzleDisplay(4, 3)}</span>
+          </div>
+
+          {/* ヲ (固定) */}
+          <div className="flex items-center gap-2 pl-[1.8em]">
+              <span className="text-amber-500 font-bold">ヲ</span>
+          </div>
+      </div>
+    );
 
     return (
       <div 
@@ -297,7 +343,7 @@ A → P → P → [ ？ ] → M → W
         {/* --- ROOM VIEW (Navigation) --- */}
         {view === "room" && (
           <>
-            <div className="absolute inset-0 bg-black/20 pointer-events-none transition-all duration-700"></div>
+            <div className="absolute inset-0 bg-black/30 pointer-events-none transition-all duration-700"></div>
             
             <div className="absolute top-0 w-full h-24 bg-gradient-to-b from-black/80 to-transparent z-0"></div>
             <div className="absolute bottom-0 w-full h-40 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-0"></div>
@@ -325,23 +371,31 @@ A → P → P → [ ？ ] → M → W
 
               <div className="relative flex flex-col items-center">
                 
+                {/* === Wall 1: Exit Door (答え表示 & 縦読みパネル) === */}
                 {currentWallIndex === 0 && (
                   <div className="absolute -top-32 md:-top-48 transform scale-75 md:scale-100 transition-all duration-500 z-0">
                     <button
-                      onClick={() => isAllSolved && setFinalInputOpen(true)}
-                      className={`flex flex-col items-center group ${isAllSolved ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                      onClick={() => setFinalInputOpen(true)}
+                      className="flex flex-col items-center group cursor-pointer"
                     >
-                       <div className={`w-40 h-64 border-4 ${isAllSolved ? 'border-amber-500 bg-amber-900/40' : 'border-stone-600 bg-black/60'} rounded-t-full flex items-center justify-center relative overflow-hidden transition-all duration-500 shadow-2xl backdrop-blur-sm`}>
-                          {isAllSolved ? (
-                            <DoorOpen size={64} className="text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] animate-pulse" />
-                          ) : (
-                            <Lock size={40} className="text-stone-500" />
-                          )}
-                          <div className="absolute inset-2 border border-dashed border-amber-900/30 rounded-t-full"></div>
+                       <div className="w-72 h-96 border-4 border-amber-600/60 bg-black/80 rounded-t-full flex flex-col items-center justify-start pt-10 relative overflow-hidden transition-all duration-500 shadow-2xl backdrop-blur-md">
+                          
+                          <div id="lock-icon" className="mb-4">
+                             {isAllSolved ? (
+                                <DoorOpen size={32} className="text-amber-500 animate-pulse" />
+                             ) : (
+                                <Lock size={28} className="text-stone-500" />
+                             )}
+                          </div>
+
+                          <FinalPuzzleLayout />
+
+                          <div className="mt-auto mb-4 text-center">
+                             <p className={`text-[10px] tracking-widest uppercase animate-pulse ${isAllSolved ? 'text-amber-600/80' : 'text-stone-600'}`}>
+                               {isAllSolved ? "TAP TO OPEN" : "TAP TO EXAMINE"}
+                             </p>
+                          </div>
                        </div>
-                       <span className={`mt-4 text-xs tracking-widest uppercase font-bold bg-black/50 px-2 py-1 rounded ${isAllSolved ? 'text-amber-400' : 'text-stone-500'}`}>
-                         Exit Door
-                       </span>
                     </button>
                   </div>
                 )}
@@ -353,8 +407,8 @@ A → P → P → [ ？ ] → M → W
                     relative w-64 h-80 md:w-80 md:h-96 bg-black/40 border-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-sm
                     flex flex-col items-center justify-center gap-6 p-6
                     transition-transform duration-500 transform hover:scale-105 group
-                    ${isSolved ? 'border-amber-900/30 opacity-80 cursor-default grayscale' : 'border-[#d4d4d8]/20 cursor-pointer'}
-                    ${currentWallIndex === 0 ? 'mt-40 md:mt-48' : ''} 
+                    ${isSolved ? 'border-amber-900/30 opacity-40 cursor-default grayscale' : 'border-[#d4d4d8]/20 cursor-pointer'}
+                    ${currentWallIndex === 0 ? 'mt-64 md:mt-72' : ''} 
                   `}
                 >
                   <div className="absolute inset-0 border border-white/10 m-1"></div>
@@ -365,23 +419,16 @@ A → P → P → [ ？ ] → M → W
                   </div>
                   
                   <div className="text-center z-10">
-                    <h3 className={`font-serif text-lg tracking-widest mb-2 font-bold ${isSolved ? 'text-stone-500 line-through' : 'text-stone-200'}`}>
-                      {currentPuzzle.title}
-                    </h3>
-                    <span className={`text-[10px] tracking-[0.3em] uppercase bg-black/50 px-2 py-1 rounded ${isSolved ? 'text-red-900 font-bold border border-red-900/50' : 'text-stone-400 border border-white/10'}`}>
-                      {isSolved ? "SOLVED" : "Tap to Examine"}
-                    </span>
-                  </div>
-
-                  {isSolved && (
-                    <div className="absolute bottom-8 flex gap-2">
-                      {currentPuzzle.rewardChars.map((c, i) => (
-                        <span key={i} className="w-8 h-8 flex items-center justify-center border border-amber-900/50 text-amber-700 font-bold bg-black/80 text-sm shadow-md">
-                          {c}
+                     {isSolved ? (
+                        <span className="text-xl font-bold text-stone-500 tracking-widest border-2 border-stone-600 px-4 py-2 rounded">
+                          SOLVED
                         </span>
-                      ))}
-                    </div>
-                  )}
+                     ) : (
+                        <span className="text-[10px] tracking-[0.3em] uppercase text-stone-400 border border-white/10 bg-black/50 px-2 py-1 rounded">
+                          Tap to Examine
+                        </span>
+                     )}
+                  </div>
                 </button>
                 
               </div>
@@ -403,32 +450,49 @@ A → P → P → [ ？ ] → M → W
         {/* --- FINAL DOOR MODAL --- */}
         {finalInputOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 animate-fadeIn p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-[#1c1917] border border-amber-700/50 p-8 rounded-sm shadow-2xl relative">
+            <div className="w-full max-w-lg bg-[#1c1917] border border-amber-700/50 p-8 rounded-sm shadow-2xl relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-800 via-amber-500 to-amber-800"></div>
               
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <DoorOpen size={48} className="mx-auto text-amber-600 mb-4 animate-float" />
                 <h3 className="text-xl font-bold text-amber-100 tracking-widest font-serif">最後の試練</h3>
-                <p className="mt-6 text-amber-200/70 text-sm leading-relaxed font-serif">
-                  手に入れた<span className="text-amber-500 font-bold">8つの文字</span>を<br/>
-                  壁の番号順（1→4）につなぎ合わせ、<br/>
-                  真実の言葉を唱えよ。
+                <p className="mt-2 text-amber-200/70 text-sm font-serif">
+                  壁に浮かぶ文字を読め。
                 </p>
               </div>
-              <input
-                type="text"
-                value={finalAnswer}
-                onChange={(e) => setFinalAnswer(e.target.value)}
-                className="w-full bg-[#0c0a09] border border-amber-900/60 p-4 text-center text-amber-100 text-lg mb-6 focus:outline-none focus:border-amber-600 transition-colors font-serif rounded-sm"
-                placeholder="全8文字"
-              />
-              <button
-                id="final-btn"
-                onClick={checkFinalAnswer}
-                className="w-full bg-gradient-to-r from-amber-800 to-amber-900 hover:from-amber-700 hover:to-amber-800 text-amber-100 border border-amber-700/50 py-4 tracking-widest transition-all rounded-sm font-bold shadow-lg"
-              >
-                扉を開く
-              </button>
+
+              <div className="bg-black/60 p-6 rounded mb-8 text-center border border-amber-900/30 flex justify-center">
+                 <FinalPuzzleLayout />
+              </div>
+
+              {/* 回答エリア: 全問正解時のみ表示 */}
+              {isAllSolved ? (
+                <>
+                  <input
+                    type="text"
+                    value={finalAnswer}
+                    onChange={(e) => setFinalAnswer(e.target.value)}
+                    className="w-full bg-[#0c0a09] border border-amber-900/60 p-4 text-center text-amber-100 text-lg mb-6 focus:outline-none focus:border-amber-600 transition-colors font-serif rounded-sm"
+                    placeholder="全6文字"
+                  />
+                  <button
+                    id="final-btn"
+                    onClick={checkFinalAnswer}
+                    className="w-full bg-gradient-to-r from-amber-800 to-amber-900 hover:from-amber-700 hover:to-amber-800 text-amber-100 border border-amber-700/50 py-4 tracking-widest transition-all rounded-sm font-bold shadow-lg"
+                  >
+                    扉を開く
+                  </button>
+                </>
+              ) : (
+                <div className="bg-black/80 p-6 rounded text-center border border-stone-800 mb-4">
+                  <Lock size={24} className="mx-auto text-stone-500 mb-3" />
+                  <p className="text-stone-400 text-sm tracking-widest font-serif leading-loose">
+                    全ての謎を解くまで<br/>
+                    答えを刻むことはできない
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={() => setFinalInputOpen(false)}
                 className="w-full mt-4 text-amber-800/60 text-xs hover:text-amber-600"
@@ -455,14 +519,13 @@ A → P → P → [ ？ ] → M → W
                 
                 <p className="text-amber-600/80 text-xs mb-6 tracking-[0.3em] font-bold">FINAL MESSAGE</p>
                 <p className="text-2xl md:text-4xl text-amber-100 font-bold tracking-widest mb-10 pb-2">
-                  これからよろしく
+                  よいおとしを
                 </p>
 
                 <div className="text-center text-sm text-amber-200/60 leading-8 font-serif">
                   <p>
-                    二人の物語は、<br/>
-                    まだ始まったばかり。<br/>
-                    次のページを一緒にめくろう。
+                    2024年はありがとう！<br/>
+                    2025年もよろしく！
                   </p>
                 </div>
                 
